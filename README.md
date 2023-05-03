@@ -5,7 +5,7 @@ Tomasulo's algorithm is a computer architecture hardware algorithm for dynamic s
 ## 💻 Architecture
 
 <div align="center"> 
-    <img align="center" src="https://img.brainkart.com/imagebk9/41ySGbV.jpg"/>
+    <img align="center" src="https://cdn.discordapp.com/attachments/1094515229578235967/1103276856431624245/A49zZDoYsrZ8AAAAAElFTkSuQmCC.png"/>
 </div>
 
 -----------------------------
