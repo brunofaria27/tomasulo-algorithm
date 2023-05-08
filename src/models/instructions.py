@@ -1,4 +1,4 @@
-from consts import CLOCK_TIME_INSTRUCTION
+from important_vars import CLOCK_TIME_INSTRUCTION
 
 class InstructionUnit:
     def __init__(self, operation: str, register: str, arg1: str, arg2: str) -> None:

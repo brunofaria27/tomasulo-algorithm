@@ -2,7 +2,7 @@
 from models.instructions import InstructionUnit
 
 # Consts
-from consts import INSTRUCTIONS, INSTRUCTION_QUEUE
+from important_vars import INSTRUCTIONS, INSTRUCTION_QUEUE
 
 def readInstructions(filename: str) -> None:
     with open(filename, 'r') as file:
