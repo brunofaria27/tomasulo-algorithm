@@ -36,11 +36,11 @@ def main() -> None:
     mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
     os.system('cls') # Clear console -> Change to clear if you use a Unix OS
-    print(f'--------------- RESERVATION STATION ---------------')
-    for i in RESERVATION_STATION:
-        print(i)
     print('--------------- INSTRUCTION QUEUE ---------------')
     for i in INSTRUCTION_QUEUE:
+        print(i)
+    print(f'--------------- RESERVATION STATION ---------------')
+    for i in RESERVATION_STATION:
         print(i)
     print('--------------- REGISTER STATUS ---------------')
     for i in REGISTER_STATUS:
