@@ -6,7 +6,6 @@ class InstructionUnit:
         self.register = register
         self.arg1 = arg1
         self.arg2 = arg2
-        self.isBusy = False
         self.isIssued = False
         self.isStarted = False
         self.isWritten = False
@@ -18,9 +17,9 @@ class InstructionUnit:
         self.isWrittenClock = -1
         self.isFinishedClock = -1
 
-    def __str__(self) -> None:
-        return "Operation: " + str(self.operation) + " - Register: " + str(self.register) + " - Argument 1: " + str(self.arg1) + " - Argument 2: " + str(
-            self.arg2) + " - Busy: " + str(self.isBusy) + " - Issued: " + str(self.isIssued) + " - Started: " + str(self.isStarted) + " - Written: " + str(
-            self.isWritten) + " - Finished: " + str(self.isFinished) + " - Clocks: " + str(self.clocks) + " - Clocks left: " + str(
-            self.clocksLeft) + " - Issued Clock: " + str(self.isIssuedClock) + " - Started Clock: " + str(self.isStartedClock) + " - Written Clock: " + str(
-            self.isWrittenClock) + " - FinishedClock: " + str(self.isFinishedClock)
+    def __str__(self) -> str:
+        return "[Operation: " + str(self.operation) + ", Register: " + str(self.register) + ", Argument 1: " + str(self.arg1) + ", Argument 2: " + str(
+            self.arg2) + ", Issued: " + str(self.isIssued) + ", Started: " + str(self.isStarted) + ", Written: " + str(
+            self.isWritten) + ", Finished: " + str(self.isFinished) + ", Clocks: " + str(self.clocks) + ", Clocks left: " + str(
+            self.clocksLeft) + ", Issued Clock: " + str(self.isIssuedClock) + ", Started Clock: " + str(self.isStartedClock) + ", Written Clock: " + str(
+            self.isWrittenClock) + ", FinishedClock: " + str(self.isFinishedClock) + "]"
