@@ -1,8 +1,13 @@
 # Imports
+import os
 from models.Instructions import InstructionUnit
+from models.ReservationStation import ReservationStation
 
 # Important vars
-from important_vars import INSTRUCTION_QUEUE
+from important_vars import (
+    INSTRUCTION_QUEUE,
+    RESERVATION_STATION
+)
 
 # Global vars
 global CLOCK
@@ -13,10 +18,27 @@ def readInstructions(filename: str) -> None:
             line_args = line.strip().split(" ")
             INSTRUCTION_QUEUE.append(InstructionUnit(line_args[0], line_args[1], line_args[2], line_args[3])) # OP, REGISTER, ARG1, ARG2
 
+def createReservationStations(loads_fu: int, store_fu: int, add_fu: int, mult_fu: int) -> None:
+    for i in range(loads_fu): RESERVATION_STATION.append(ReservationStation(f'Load{i}'))
+    for i in range(store_fu): RESERVATION_STATION.append(ReservationStation(f'Store{i}'))
+    for i in range(add_fu): RESERVATION_STATION.append(ReservationStation(f'Add{i}'))
+    for i in range(mult_fu): RESERVATION_STATION.append(ReservationStation(f'Mult{i}'))
+
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
-    for instruction in INSTRUCTION_QUEUE:
-        print(instruction)
+    loads_fu = int(input('Digite a quantidade de FU`s de LOAD: '))
+    store_fu = int(input('Digite a quantidade de FU`s de STORE: '))
+    add_fu = int(input('Digite a quantidade de FU`s de ADD: '))
+    mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
+    createReservationStations(loads_fu, store_fu, add_fu, mult_fu)
+    os.system('cls') # Clear console -> Change to clear if you use a Unix OS
+    print(f'--------------- RESERVATION STATION ---------------')
+    for i in RESERVATION_STATION:
+        print(i)
+    print('--------------- INSTRUCTION QUEUE ---------------')
+    for i in INSTRUCTION_QUEUE:
+        print(i)
+
         
 
 main()
