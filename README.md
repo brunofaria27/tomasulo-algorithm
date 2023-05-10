@@ -9,7 +9,12 @@
 </div>
 
 -----------------------------
+### 👨‍💻 Valid commands
+- ***LW, SW, ADD, SUB, MUL, DIV***
+    - **Cycles per instruction -** **LW:** 2, **SW:** 2, **ADD:** 2, **SUB:** 2, **MUL:** 10, **DIV:** 40
 
+
+-----------------------------
 #### Bibliography
 
 - David A. Patterson and John L. Hennessy. 2013. Computer Organization and Design, Fifth Edition: The Hardware/Software Interface (5th. ed.). Morgan Kaufmann Publishers Inc., San Francisco, CA, USA.
