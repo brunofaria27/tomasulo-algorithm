@@ -12,4 +12,4 @@ class ReservationStation:
 
     def __str__(self) -> str:
         return "[Time to finish: " + str(self.timeToFinish) + ", Busy: " + str(self.busy) + ", Op: " + str(self.op) + ", Destination: " + str(self.D) + ", Vj: " + str(self.Vj) + ", Vk: " + str(
-            self.Vk) + ", Qj: " + str(self.Qj) + ", Qj: " + str(self.Qj) + ", A: " + str(self.A) + "]"
+            self.Vk) + ", Qj: " + str(self.Qj) + ", Qk: " + str(self.Qk) + ", A: " + str(self.A) + "]"

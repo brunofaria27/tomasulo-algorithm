@@ -40,14 +40,88 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
 
 def issueInstructions(instruction: InstructionUnit) -> None:
     if instruction.operation in ['ADD', 'SUB']:
-        updateReservationStation('Add', instruction)
-        #TODO: if else para ver se tem dependencia e atualizar os campos das unidades -> dependencia sera vista na unidade registerStatus
+        reservation_station_name = updateReservationStation('Add', instruction)
+        # Verifica se há dependências e atualiza os campos das unidades
+        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+        
+        # Atualiza o status do registrador de destino
+        if REGISTER_STATUS[instruction.register].Qi is None:
+            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation in ['MUL', 'DIV']:
-        updateReservationStation('Mult', instruction)
+        reservation_station_name = updateReservationStation('Mult', instruction)
+        # Verifica se há dependências e atualiza os campos das unidades
+        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+        
+        # Atualiza o status do registrador de destino
+        if REGISTER_STATUS[instruction.register].Qi is None:
+            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'LW':
-        updateReservationStation('Load', instruction)
+        # Cria uma nova entrada na estação de reserva Load
+        reservation_station_name = updateReservationStation('Load', instruction)
+        # Verifica se há dependências e atualiza os campos das unidades
+        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+        # Define o endereço do dado na memória
+        RESERVATION_STATION[reservation_station_name].A = instruction.arg2
+        
+        # Atualiza o status do registrador de destino
+        if REGISTER_STATUS[instruction.register].Qi is None:
+            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'SW':
-        updateReservationStation('Store', instruction)
+         # Cria uma nova entrada na estação de reserva Store
+        reservation_station_name = updateReservationStation('Store', instruction)
+        # Verifica se há dependências e atualiza os campos das unidades
+        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+        else:
+            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+        # Define o endereço do dado na memória
+        RESERVATION_STATION[reservation_station_name].A = instruction.register
+        
+        # Atualiza o status do registrador de destino
+        if REGISTER_STATUS[instruction.register].Qi is None:
+            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+
+def updateUnits() -> None:
+    print('bug')
+
+def isReservationEmpty() -> None:
+    for chave in RESERVATION_STATION: 
+        if RESERVATION_STATION[chave].busy == True:
+            return False
+    return True
+
+def runProgram() -> None:
+    global CLOCK
+
+    CLOCK = 0
+    issueInstructions(INSTRUCTION_QUEUE.pop(0))
+    CLOCK += 1
+    while not isReservationEmpty():
+        if INSTRUCTION_QUEUE != []:
+            issueInstructions(INSTRUCTION_QUEUE.pop(0))
+            # TODO: Update reservation station -> decrement time to finish and Vj, Vk to Qj, Qk
+            CLOCK += 1
 
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
@@ -56,10 +130,6 @@ def main() -> None:
     add_fu = int(input('Digite a quantidade de FU`s de ADD: '))
     mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
-    QUANTITY_OF_INSTRUCTIONS = len(INSTRUCTION_QUEUE)
-    issueInstructions(INSTRUCTION_QUEUE.pop(0))
-    while len(COMPLETE_INSTRUCTIONS) != QUANTITY_OF_INSTRUCTIONS:
-        if INSTRUCTION_QUEUE != []:
-            issueInstructions(INSTRUCTION_QUEUE.pop(0))
+    runProgram()
 
 main()
