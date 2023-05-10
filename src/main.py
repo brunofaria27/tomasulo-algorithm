@@ -1,5 +1,5 @@
 # Imports
-from models.instructions import InstructionUnit
+from models.Instructions import InstructionUnit
 
 # Consts
 from important_vars import INSTRUCTIONS, INSTRUCTION_QUEUE
