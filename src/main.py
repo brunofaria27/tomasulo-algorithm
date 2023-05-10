@@ -17,7 +17,7 @@ def createInstructions() -> None:
 def main() -> None:
     readInstructions("../instructions\instruction1.txt")
     createInstructions()
-    for i in INSTRUCTION_QUEUE:
-        print(i.printInstruction())
+    for instruction in INSTRUCTION_QUEUE:
+        print(instruction)
 
 main()
