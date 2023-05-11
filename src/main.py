@@ -44,11 +44,17 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         reservation_station_name = updateReservationStation('Add', instruction)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+            if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
+                RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
         else:
-            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
         if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+            if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
+                RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
         else:
             RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
         
@@ -59,11 +65,17 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         reservation_station_name = updateReservationStation('Mult', instruction)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+            if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
+                RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
         else:
-            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
         if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+            if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
+                RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
         else:
             RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
         
@@ -105,6 +117,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     else:
         print(str(instruction.operation) + " não é válido.")
 
+
 def updateUnits() -> None:
     for chave in RESERVATION_STATION:
         if RESERVATION_STATION[chave].busy == True:
@@ -129,29 +142,51 @@ def isReservationEmpty() -> bool:
             return False
     return True
 
+def printInformation():
+    print(f'-------------- CLOCK {CLOCK} --------------')
+    print(f'-------------- RESERVATION STATION --------------')
+    for i in RESERVATION_STATION:
+            print(str(i) + " " + str(RESERVATION_STATION[i]))
+    print("\n")
+
+    print(f'-------------- INSTRUCTION QUEUE STATION --------------')
+    for i in INSTRUCTION_QUEUE:
+        print(str(i))
+    print("\n")
+
+    print(f'-------------- REGISTER STATUS --------------')
+    for i in REGISTER_STATUS:
+        print(str(i) + " " + str(REGISTER_STATUS[i]))
+    print("\n")
+
+
 def runProgram() -> None:
     global CLOCK
 
     CLOCK = 0
+    printInformation()
     issueInstructions(INSTRUCTION_QUEUE.pop(0))
     CLOCK += 1
     while not isReservationEmpty():
-        print(f'-------------- CLOCK {CLOCK} --------------')
-        for i in RESERVATION_STATION:
-            print(str(i) + " " + str(RESERVATION_STATION[i]))
-        print("\n")
+        printInformation()
         CLOCK += 1
         updateUnits()
         if INSTRUCTION_QUEUE != []:
             issueInstructions(INSTRUCTION_QUEUE.pop(0))
-            # TODO: Update reservation station -> decrement time to finish and Vj, Vk to Qj, Qk
+    printInformation()
 
+    
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
-    loads_fu = int(input('Digite a quantidade de FU`s de LOAD: '))
-    store_fu = int(input('Digite a quantidade de FU`s de STORE: '))
-    add_fu = int(input('Digite a quantidade de FU`s de ADD: '))
-    mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
+    # loads_fu = int(input('Digite a quantidade de FU`s de LOAD: '))
+    # store_fu = int(input('Digite a quantidade de FU`s de STORE: '))
+    # add_fu = int(input('Digite a quantidade de FU`s de ADD: '))
+    # mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
+
+    loads_fu = 3
+    store_fu = 3
+    add_fu = 3
+    mult_fu = 3
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
     runProgram()
 
