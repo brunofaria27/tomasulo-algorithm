@@ -29,21 +29,29 @@ def createUnits(loads_fu: int, store_fu: int, add_fu: int, mult_fu: int) -> None
     for i in range(mult_fu): RESERVATION_STATION[f'Mult{i}'] = ReservationStation()
     for i in range(0, 31, 2): REGISTER_STATUS[f'F{i}'] = RegisterStatus()
 
-def updateReservationStation(name_type: str, instruction: InstructionUnit) -> str:
+def updateReservationStation(name_type: str, instruction: InstructionUnit, hasDependency) -> str:
     for key in RESERVATION_STATION:
         if RESERVATION_STATION[key].busy == False and key.startswith(name_type):
             RESERVATION_STATION[key].busy = True
-            RESERVATION_STATION[key].timeToFinish = instruction.clocks
+            if hasDependency == True:
+                RESERVATION_STATION[key].timeToFinish = instruction.clocks + 1
+            else: RESERVATION_STATION[key].timeToFinish = instruction.clocks
             RESERVATION_STATION[key].op = instruction.operation
             RESERVATION_STATION[key].D = instruction.register
             return key
 
 def issueInstructions(instruction: InstructionUnit) -> None:
-    #for chave in RESERVATION_STATION:
-        #print(str(chave) + " " + str(RESERVATION_STATION[chave]))
+    hasDependency = False
+
+    if instruction.operation in ['ADD', 'SUB', 'MUL', 'DIV']:
+        if REGISTER_STATUS[instruction.arg1].Qi != None or not str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL') or REGISTER_STATUS[instruction.arg2].Qi != None or not str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
+            hasDependency = True
+    elif instruction.operation in ['LW', 'SW']:
+        if REGISTER_STATUS[instruction.register].Qi != None or not str(REGISTER_STATUS[instruction.register].Qi).startswith('VAL'):
+            hasDependency = True
 
     if instruction.operation in ['ADD', 'SUB']:
-        reservation_station_name = updateReservationStation('Add', instruction)
+        reservation_station_name = updateReservationStation('Add', instruction, hasDependency)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
@@ -58,7 +66,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation in ['MUL', 'DIV']:
-        reservation_station_name = updateReservationStation('Mult', instruction)
+        reservation_station_name = updateReservationStation('Mult', instruction, hasDependency)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
@@ -74,7 +82,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'LW':
         # Cria uma nova entrada na estação de reserva Load
-        reservation_station_name = updateReservationStation('Load', instruction)
+        reservation_station_name = updateReservationStation('Load', instruction, hasDependency)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
@@ -88,7 +96,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'SW':
          # Cria uma nova entrada na estação de reserva Store
-        reservation_station_name = updateReservationStation('Store', instruction)
+        reservation_station_name = updateReservationStation('Store', instruction, hasDependency)
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
@@ -104,11 +112,13 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         # Atualiza o status do registrador de destino
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+    else:
+        print(str(instruction.operation) + " não é válido.")
 
 def updateUnits() -> None:
     for chave in RESERVATION_STATION:
         if RESERVATION_STATION[chave].busy == True:
-            if RESERVATION_STATION[chave].timeToFinish == -1:
+            if RESERVATION_STATION[chave].timeToFinish == 0:
                 # TODO: Termina a execução e tira da reservation station - atualiza register status VAL(Chave) - update no Vj e Vk com base no QJ e Qk
                 REGISTER_STATUS[RESERVATION_STATION[chave].D].Qi = f'VAL({chave})'
                 for sub_chave in RESERVATION_STATION:
