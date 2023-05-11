@@ -1,6 +1,6 @@
 class ReservationStation:
     def __init__(self) -> None:
-        self.timeToFinish = None
+        self.timeToFinish = -1
         self.busy = False
         self.op = None
         self.D = None

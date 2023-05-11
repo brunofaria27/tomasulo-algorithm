@@ -39,6 +39,9 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
             return key
 
 def issueInstructions(instruction: InstructionUnit) -> None:
+    #for chave in RESERVATION_STATION:
+        #print(str(chave) + " " + str(RESERVATION_STATION[chave]))
+
     if instruction.operation in ['ADD', 'SUB']:
         reservation_station_name = updateReservationStation('Add', instruction)
         # Verifica se há dependências e atualiza os campos das unidades
@@ -103,9 +106,24 @@ def issueInstructions(instruction: InstructionUnit) -> None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
 
 def updateUnits() -> None:
-    print('bug')
+    for chave in RESERVATION_STATION:
+        if RESERVATION_STATION[chave].busy == True:
+            if RESERVATION_STATION[chave].timeToFinish == -1:
+                # TODO: Termina a execução e tira da reservation station - atualiza register status VAL(Chave) - update no Vj e Vk com base no QJ e Qk
+                REGISTER_STATUS[RESERVATION_STATION[chave].D].Qi = f'VAL({chave})'
+                for sub_chave in RESERVATION_STATION:
+                    if RESERVATION_STATION[sub_chave].Qj == chave:
+                        RESERVATION_STATION[sub_chave].Qj = None
+                        RESERVATION_STATION[sub_chave].Vj = f'VAL({chave})'
+                    elif RESERVATION_STATION[sub_chave].Qk == chave:
+                        RESERVATION_STATION[sub_chave].Qk = None
+                        RESERVATION_STATION[sub_chave].Vk = f'VAL({chave})'
+                RESERVATION_STATION[chave] = ReservationStation()
+            else:
+                if RESERVATION_STATION[chave].Qj == None and RESERVATION_STATION[chave].Qk == None:
+                    RESERVATION_STATION[chave].timeToFinish -= 1
 
-def isReservationEmpty() -> None:
+def isReservationEmpty() -> bool:
     for chave in RESERVATION_STATION: 
         if RESERVATION_STATION[chave].busy == True:
             return False
@@ -118,10 +136,15 @@ def runProgram() -> None:
     issueInstructions(INSTRUCTION_QUEUE.pop(0))
     CLOCK += 1
     while not isReservationEmpty():
+        print(f'-------------- CLOCK {CLOCK} --------------')
+        for i in RESERVATION_STATION:
+            print(str(i) + " " + str(RESERVATION_STATION[i]))
+        print("\n")
+        CLOCK += 1
+        updateUnits()
         if INSTRUCTION_QUEUE != []:
             issueInstructions(INSTRUCTION_QUEUE.pop(0))
             # TODO: Update reservation station -> decrement time to finish and Vj, Vk to Qj, Qk
-            CLOCK += 1
 
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
