@@ -122,20 +122,32 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     else:
         print(str(instruction.operation) + " não é válido.")
 
+def executeOperations(instruction_reservation: ReservationStation) -> str:
+    if instruction_reservation.op == 'LW':
+        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
+    elif instruction_reservation.op == 'SW':
+        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
+    elif instruction_reservation.op == 'SUB':
+        return f'VAL({str(instruction_reservation.Vj) + " - " + str(instruction_reservation.Vk)})'
+    elif instruction_reservation.op == 'ADD':
+        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.Vk)})'
+    elif instruction_reservation.op == 'MUL':
+        return f'VAL({str(instruction_reservation.Vj) + " * " + str(instruction_reservation.Vk)})'
+    elif instruction_reservation.op == 'DIV':
+        return f'VAL({str(instruction_reservation.Vj) + " / " + str(instruction_reservation.Vk)})'
 
 def updateUnits() -> None:
     for chave in RESERVATION_STATION:
         if RESERVATION_STATION[chave].busy == True:
             if RESERVATION_STATION[chave].timeToFinish == 0:
-                # TODO: Termina a execução e tira da reservation station - atualiza register status VAL(Chave) - update no Vj e Vk com base no QJ e Qk
-                REGISTER_STATUS[RESERVATION_STATION[chave].D].Qi = f'VAL({chave})'
+                REGISTER_STATUS[RESERVATION_STATION[chave].D].Qi = executeOperations(RESERVATION_STATION[chave])
                 for sub_chave in RESERVATION_STATION:
                     if RESERVATION_STATION[sub_chave].Qj == chave:
                         RESERVATION_STATION[sub_chave].Qj = None
-                        RESERVATION_STATION[sub_chave].Vj = f'VAL({chave})'
+                        RESERVATION_STATION[sub_chave].Vj = chave
                     elif RESERVATION_STATION[sub_chave].Qk == chave:
                         RESERVATION_STATION[sub_chave].Qk = None
-                        RESERVATION_STATION[sub_chave].Vk = f'VAL({chave})'
+                        RESERVATION_STATION[sub_chave].Vk = chave
                 RESERVATION_STATION[chave] = ReservationStation()
             else:
                 if RESERVATION_STATION[chave].Qj == None and RESERVATION_STATION[chave].Qk == None:
