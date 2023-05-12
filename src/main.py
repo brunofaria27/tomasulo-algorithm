@@ -206,3 +206,6 @@ def main() -> None:
     runProgram()
 
 main()
+# TODO: travar instrução e esperar acabar uma e pular outras caso o reservation station esteja ocupado.
+# TODO: tratar dependências falsas dependendo da quantidade de ciclos de clock os valores armazenados no registrador não ficam certos
+# TODO: ver se seria necessário criar a memória RANDOM para pegar os valores e fazer os calculos colocando valores inteiros (Simulador acho que não precisa, mas vale a pena perguntar)
