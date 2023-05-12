@@ -28,7 +28,7 @@ class ROB:
         return False
     
     def __str__(self):
-        rob_str = "---------------------------------------------- ROB ----------------------------------------------\n"
+        rob_str = "---------------------------------------------- REORDER BUFFER ----------------------------------------------\n"
         for i, entries in enumerate(self.entries):
             if entries is None:
                 rob_str += f"[{i}]: Empty\n"
