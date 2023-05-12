@@ -1,5 +1,3 @@
-from important_vars import (REGISTER_STATUS)
-
 class ROBEntry:
     def __init__(self, instr: str, dest_reg: str) -> None:
         self.instr = instr  # armazena a instrução
@@ -9,6 +7,7 @@ class ROBEntry:
 
 class ROB:
     def __init__(self, size):
+        self.size = size
         self.entries = [None] * size  # cria uma lista de entradas do tamanho especificado
         self.head = 0  # indica o próximo slot vazio do ROB
         self.tail = 0  # indica o slot da entrada mais antiga que ainda não foi gravada
@@ -29,10 +28,10 @@ class ROB:
         return False
     
     def __str__(self):
-        rob_str = "ROB:\n"
-        for i, entry in enumerate(self.entries):
-            if entry is None:
+        rob_str = "---------------------------------------------- ROB ----------------------------------------------\n"
+        for i, entries in enumerate(self.entries):
+            if entries is None:
                 rob_str += f"[{i}]: Empty\n"
             else:
-                rob_str += f"[{i}]: {entry.instr}, Dest: {entry.dest_reg}, Value: {entry.value}, Ready: {entry.ready}\n"
+                rob_str += f"[{i}]: {entries.instr}, Dest: {entries.dest_reg}, Value: {entries.value}, Ready: {entries.ready}\n"
         return rob_str

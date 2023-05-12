@@ -27,12 +27,14 @@ def readInstructions(filename: str) -> None:
             line_args = line.strip().split(" ")
             INSTRUCTION_QUEUE.append(InstructionUnit(line_args[0], line_args[1], line_args[2], line_args[3])) # OP, REGISTER, ARG1, ARG2
 
+
 def createUnits(loads_fu: int, store_fu: int, add_fu: int, mult_fu: int) -> None:
     for i in range(loads_fu): RESERVATION_STATION[f'Load{i}'] = ReservationStation()
     for i in range(store_fu): RESERVATION_STATION[f'Store{i}'] = ReservationStation()
     for i in range(add_fu): RESERVATION_STATION[f'Add{i}'] = ReservationStation()
     for i in range(mult_fu): RESERVATION_STATION[f'Mult{i}'] = ReservationStation()
     for i in range(0, 31, 2): REGISTER_STATUS[f'F{i}'] = RegisterStatus()
+
 
 def updateReservationStation(name_type: str, instruction: InstructionUnit) -> str:
     for key in RESERVATION_STATION:
@@ -42,6 +44,7 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
             RESERVATION_STATION[key].op = instruction.operation
             RESERVATION_STATION[key].D = instruction.register
             return key
+
 
 def issueInstructions(instruction: InstructionUnit) -> None:
  
@@ -122,6 +125,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     else:
         print(str(instruction.operation) + " não é válido.")
 
+
 def executeOperations(instruction_reservation: ReservationStation) -> str:
     if instruction_reservation.op == 'LW':
         return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
@@ -135,6 +139,7 @@ def executeOperations(instruction_reservation: ReservationStation) -> str:
         return f'VAL({str(instruction_reservation.Vj) + " * " + str(instruction_reservation.Vk)})'
     elif instruction_reservation.op == 'DIV':
         return f'VAL({str(instruction_reservation.Vj) + " / " + str(instruction_reservation.Vk)})'
+
 
 def updateUnits() -> None:
     for chave in RESERVATION_STATION:
@@ -153,28 +158,33 @@ def updateUnits() -> None:
                 if RESERVATION_STATION[chave].Qj == None and RESERVATION_STATION[chave].Qk == None:
                     RESERVATION_STATION[chave].timeToFinish -= 1
 
+
 def isReservationEmpty() -> bool:
     for chave in RESERVATION_STATION: 
         if RESERVATION_STATION[chave].busy == True:
             return False
     return True
 
-def printInformation():
-    print(f'-------------- CLOCK {CLOCK} --------------')
-    print(f'-------------- INSTRUCTION QUEUE STATION --------------')
-    for i in INSTRUCTION_QUEUE:
-        print(str(i))
-    print("\n")
 
-    print(f'-------------- RESERVATION STATION --------------')
+def printInformation():
+    print(f'---------------------------------------------- CLOCK {CLOCK} ----------------------------------------------')
+    if len(INSTRUCTION_QUEUE) != 0:
+        print(f'---------------------------------------------- INSTRUCTIONS QUEUE STATION ----------------------------------------------')
+        for i in INSTRUCTION_QUEUE:
+            print(str(i))
+    
+    if len(COMPLETE_INSTRUCTIONS) != 0:
+        print(f'---------------------------------------------- COMPLETE INSTRUCTIONS STATION ----------------------------------------------')
+        for i in COMPLETE_INSTRUCTIONS:
+            print(str(i))
+
+    print(f'---------------------------------------------- RESERVATION STATION ----------------------------------------------')
     for i in RESERVATION_STATION:
             print(str(i) + " " + str(RESERVATION_STATION[i]))
-    print("\n")
 
-    print(f'-------------- REGISTER STATUS --------------')
+    print(f'---------------------------------------------- REGISTER STATUS ----------------------------------------------')
     for i in REGISTER_STATUS:
         print(str(i) + " " + str(REGISTER_STATUS[i]))
-    print("\n")
 
     print(ROB_UNIT)
     print("\n")
