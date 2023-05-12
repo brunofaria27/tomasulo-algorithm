@@ -4,6 +4,8 @@ import os
 from models.Instructions import InstructionUnit
 from models.ReservationStation import ReservationStation
 from models.RegisterStatus import RegisterStatus
+from models.ReorderBuffer import ROB
+from models.ReorderBuffer import ROBEntry
 
 # Important vars
 from important_vars import (
@@ -14,7 +16,10 @@ from important_vars import (
 )
 
 # Global vars
-global CLOCK, QUANTITY_OF_INSTRUCTIONS
+global CLOCK
+
+# Instance of units
+ROB_UNIT = ROB(10)
 
 def readInstructions(filename: str) -> None:
     with open(filename, 'r') as file:
@@ -144,19 +149,22 @@ def isReservationEmpty() -> bool:
 
 def printInformation():
     print(f'-------------- CLOCK {CLOCK} --------------')
-    print(f'-------------- RESERVATION STATION --------------')
-    for i in RESERVATION_STATION:
-            print(str(i) + " " + str(RESERVATION_STATION[i]))
-    print("\n")
-
     print(f'-------------- INSTRUCTION QUEUE STATION --------------')
     for i in INSTRUCTION_QUEUE:
         print(str(i))
     print("\n")
 
+    print(f'-------------- RESERVATION STATION --------------')
+    for i in RESERVATION_STATION:
+            print(str(i) + " " + str(RESERVATION_STATION[i]))
+    print("\n")
+
     print(f'-------------- REGISTER STATUS --------------')
     for i in REGISTER_STATUS:
         print(str(i) + " " + str(REGISTER_STATUS[i]))
+    print("\n")
+
+    print(ROB_UNIT)
     print("\n")
 
 
@@ -178,11 +186,6 @@ def runProgram() -> None:
     
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
-    # loads_fu = int(input('Digite a quantidade de FU`s de LOAD: '))
-    # store_fu = int(input('Digite a quantidade de FU`s de STORE: '))
-    # add_fu = int(input('Digite a quantidade de FU`s de ADD: '))
-    # mult_fu = int(input('Digite a quantidade de FU`s de MULT: '))
-
     loads_fu = 3
     store_fu = 3
     add_fu = 3

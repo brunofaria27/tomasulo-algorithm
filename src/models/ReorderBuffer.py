@@ -1,3 +1,5 @@
+from important_vars import (REGISTER_STATUS)
+
 class ROBEntry:
     def __init__(self, instr: str, dest_reg: str) -> None:
         self.instr = instr  # armazena a instrução
@@ -11,24 +13,26 @@ class ROB:
         self.head = 0  # indica o próximo slot vazio do ROB
         self.tail = 0  # indica o slot da entrada mais antiga que ainda não foi gravada
     
-    def insert(self, instr: str, dest_reg: str) -> int:
-        # cria uma nova entrada do ROB
-        entry = ROBEntry(instr, dest_reg)
-        # adiciona a entrada na próxima posição vazia do ROB
+    def insert(self, entry: ROBEntry) -> int:
         self.entries[self.head] = entry
-        # atualiza o ponteiro para a próxima posição vazia
         self.head = (self.head + 1) % len(self.entries)
-        # retorna o índice da nova entrada do ROB
         return (self.head - 1) % len(self.entries)
 
     def update(self, rob_idx: int, value: str) -> None:
-        # atualiza o valor da entrada do ROB
         self.entries[rob_idx].value = value
-
+    
     def has_false_dependencies(self, dest_reg: str) -> bool:
-        # verifica se há dependências falsas em relação ao registrador de destino fornecido
         for i in range(self.tail, self.head):
             entry = self.entries[i % len(self.entries)]
             if entry and not entry.ready and entry.dest_reg == dest_reg:
                 return True
         return False
+    
+    def __str__(self):
+        rob_str = "ROB:\n"
+        for i, entry in enumerate(self.entries):
+            if entry is None:
+                rob_str += f"[{i}]: Empty\n"
+            else:
+                rob_str += f"[{i}]: {entry.instr}, Dest: {entry.dest_reg}, Value: {entry.value}, Ready: {entry.ready}\n"
+        return rob_str
