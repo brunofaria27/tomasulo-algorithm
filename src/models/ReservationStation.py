@@ -9,7 +9,8 @@ class ReservationStation:
         self.Qj = None
         self.Qk = None
         self.A = None # Only used in LW and SW
+        self.ROBId = None
 
     def __str__(self) -> str:
         return "[Time to finish: " + str(self.timeToFinish) + ", Busy: " + str(self.busy) + ", Op: " + str(self.op) + ", Destination: " + str(self.D) + ", Vj: " + str(self.Vj) + ", Vk: " + str(
-            self.Vk) + ", Qj: " + str(self.Qj) + ", Qk: " + str(self.Qk) + ", A: " + str(self.A) + "]"
+            self.Vk) + ", Qj: " + str(self.Qj) + ", Qk: " + str(self.Qk) + ", A: " + str(self.A) + ", ROB Id: " + str(self.ROBId) + "]"

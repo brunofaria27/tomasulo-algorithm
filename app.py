@@ -24,10 +24,7 @@ class InstructionUnit:
 
     def __str__(self) -> str:
         return "[Operation: " + str(self.operation) + ", Register: " + str(self.register) + ", Argument 1: " + str(self.arg1) + ", Argument 2: " + str(
-            self.arg2) + ", Issued: " + str(self.isIssued) + ", Started: " + str(self.isStarted) + ", Written: " + str(
-            self.isWritten) + ", Finished: " + str(self.isFinished) + ", Clocks: " + str(self.clocks) + ", Clocks left: " + str(
-            self.clocksLeft) + ", Issued Clock: " + str(self.isIssuedClock) + ", Started Clock: " + str(self.isStartedClock) + ", Written Clock: " + str(
-            self.isWrittenClock) + ", FinishedClock: " + str(self.isFinishedClock) + "]"
+            self.arg2) + ", Clocks: " + str(self.clocks) + ", Clocks left: " + str(self.clocksLeft) + "]"
     
 class RegisterStatus:
     def __init__(self) -> None:
@@ -291,7 +288,7 @@ def main() -> None:
     loads_fu = 2
     store_fu = 2
     add_fu = 2
-    mult_fu = 2
+    mult_fu = 3
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
     runProgram()
 
