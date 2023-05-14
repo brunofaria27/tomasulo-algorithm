@@ -1,4 +1,4 @@
-CLOCK_TIME_INSTRUCTION = {"LW": 2, "SW": 2, "ADD": 4, "SUB": 2, "MUL": 2, "DIV": 4}
+CLOCK_TIME_INSTRUCTION = {"LW": 2, "SW": 2, "ADD": 2, "SUB": 2, "MUL": 5, "DIV": 40}
 INSTRUCTION_QUEUE = []
 RESERVATION_STATION = {}
 REGISTER_STATUS = {}
@@ -57,24 +57,27 @@ class ROBEntry:
     def __init__(self):
         self.instruction = None
         self.destination = None
+        self.value = None
         self.ready = False
+        self.reservationStation = None
+        self.leftReservationStation = False
 
     def executeOperations(self, instruction_reservation: ReservationStation) -> str:
         if instruction_reservation.op == 'LW':
-            return  f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
+            return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
         elif instruction_reservation.op == 'SW':
-            return  f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
+            return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
         elif instruction_reservation.op == 'SUB':
-            return  f'VAL({str(instruction_reservation.Vj) + " - " + str(instruction_reservation.Vk)})'
+            return f'VAL({str(instruction_reservation.Vj) + " - " + str(instruction_reservation.Vk)})'
         elif instruction_reservation.op == 'ADD':
-            return  f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.Vk)})'
+            return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.Vk)})'
         elif instruction_reservation.op == 'MUL':
-            return  f'VAL({str(instruction_reservation.Vj) + " * " + str(instruction_reservation.Vk)})'
+            return f'VAL({str(instruction_reservation.Vj) + " * " + str(instruction_reservation.Vk)})'
         elif instruction_reservation.op == 'DIV':
             return f'VAL({str(instruction_reservation.Vj) + " / " + str(instruction_reservation.Vk)})'
 
     def __str__(self):
-        return f"[Instruction: {self.instruction}, Destination: {self.destination}, Ready: {self.ready}]"
+        return f"[Instruction: {self.instruction}, Destination: {self.destination}, Ready: {self.ready}, Value: {self.value}, Reservation Station name: {self.reservationStation}, Left reservation station: {self.leftReservationStation}]"
 
 # Global vars
 global CLOCK
@@ -105,11 +108,12 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
             return key
         
 
-def addROBInstruction(instruction: str, destination: str) -> str:
+def addROBInstruction(instruction: str, destination: str, reservation_station_name: str) -> str:
     for key in REORDER_BUFFER:
         if REORDER_BUFFER[key].instruction is None:
             REORDER_BUFFER[key].instruction = instruction
             REORDER_BUFFER[key].destination = destination
+            REORDER_BUFFER[key].reservationStation = reservation_station_name
             return key
 
 
@@ -117,7 +121,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
 
     if instruction.operation in ['ADD', 'SUB']:
         reservation_station_name = updateReservationStation('Add', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register)
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
         RESERVATION_STATION[reservation_station_name].ROBId = rob_name
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
@@ -140,7 +144,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation in ['MUL', 'DIV']:
         reservation_station_name = updateReservationStation('Mult', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register)
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
         RESERVATION_STATION[reservation_station_name].ROBId = rob_name
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
@@ -164,7 +168,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     elif instruction.operation == 'LW':
         # Cria uma nova entrada na estação de reserva Load
         reservation_station_name = updateReservationStation('Load', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register)
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
         RESERVATION_STATION[reservation_station_name].ROBId = rob_name
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
@@ -180,7 +184,7 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     elif instruction.operation == 'SW':
         # Cria uma nova entrada na estação de reserva Store
         reservation_station_name = updateReservationStation('Store', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register)
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
         RESERVATION_STATION[reservation_station_name].ROBId = rob_name
         # Verifica se há dependências e atualiza os campos das unidades
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
@@ -200,30 +204,25 @@ def issueInstructions(instruction: InstructionUnit) -> None:
     else:
         print(str(instruction.operation) + " não é válido.")
 
-
-def setRegister(register: str, value: str) -> None:
-    REGISTER_STATUS[register].Qi = None
-    REGISTER_STATUS[register].value = value
-
-
-def executeReadyInstructions(reservation_instruction: ReservationStation) -> None:
-    rob_copy = dict(REORDER_BUFFER)
-    for key in rob_copy:
-        if rob_copy[key].ready:
-            rob_entry = REORDER_BUFFER[key]
-            reservation_entry = RESERVATION_STATION[rob_entry.reservationStation]
-            result = rob_entry.executeOperations(reservation_entry)
-            setRegister(rob_entry.destination, result)
+def dequeueROB() -> None:
+    for key in REORDER_BUFFER:
+        if REORDER_BUFFER[key].ready:
+            if REORDER_BUFFER[key].instruction != 'SW':
+                REGISTER_STATUS[REORDER_BUFFER[key].destination].Qi = REORDER_BUFFER[key].value
             del REORDER_BUFFER[key]
-        else:
-            break
+            REORDER_BUFFER[key] = ROBEntry()
+        else: break
+
 
 def updateUnits() -> None:
     for key in RESERVATION_STATION:
         if RESERVATION_STATION[key].busy == True:
             if RESERVATION_STATION[key].timeToFinish == 0:
-                REORDER_BUFFER[RESERVATION_STATION[key].ROBId].ready = True
-                executeReadyInstructions(RESERVATION_STATION[key])
+                rob_key = RESERVATION_STATION[key].ROBId
+                REORDER_BUFFER[rob_key].ready = True
+                REORDER_BUFFER[rob_key].leftReservationStation = True
+                REORDER_BUFFER[rob_key].value = REORDER_BUFFER[rob_key].executeOperations(RESERVATION_STATION[REORDER_BUFFER[rob_key].reservationStation])
+                dequeueROB()
                 for sub_key in RESERVATION_STATION:
                     if RESERVATION_STATION[sub_key].Qj == key:
                         RESERVATION_STATION[sub_key].Qj = None
@@ -235,6 +234,7 @@ def updateUnits() -> None:
             else:
                 if RESERVATION_STATION[key].Qj == None and RESERVATION_STATION[key].Qk == None:
                     RESERVATION_STATION[key].timeToFinish -= 1
+
 
 
 def isReservationEmpty() -> bool:
@@ -288,10 +288,10 @@ def runProgram() -> None:
     
 def main() -> None:
     readInstructions("instructions/instruction1.txt")
-    loads_fu = 3
-    store_fu = 3
-    add_fu = 3
-    mult_fu = 3
+    loads_fu = 2
+    store_fu = 2
+    add_fu = 2
+    mult_fu = 2
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
     runProgram()
 
