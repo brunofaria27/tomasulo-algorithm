@@ -4,7 +4,6 @@ import os
 from models.Instructions import InstructionUnit
 from models.ReservationStation import ReservationStation
 from models.RegisterStatus import RegisterStatus
-from models.ReorderBuffer import ROB
 from models.ReorderBuffer import ROBEntry
 
 # Important vars
@@ -12,14 +11,11 @@ from important_vars import (
     INSTRUCTION_QUEUE,
     RESERVATION_STATION,
     REGISTER_STATUS,
-    COMPLETE_INSTRUCTIONS
+    REORDER_BUFFER
 )
 
 # Global vars
 global CLOCK
-
-# Instance of units
-ROB_UNIT = ROB(10)
 
 def readInstructions(filename: str) -> None:
     with open(filename, 'r') as file:
@@ -33,6 +29,7 @@ def createUnits(loads_fu: int, store_fu: int, add_fu: int, mult_fu: int) -> None
     for i in range(store_fu): RESERVATION_STATION[f'Store{i}'] = ReservationStation()
     for i in range(add_fu): RESERVATION_STATION[f'Add{i}'] = ReservationStation()
     for i in range(mult_fu): RESERVATION_STATION[f'Mult{i}'] = ReservationStation()
+    for i in range(10): REORDER_BUFFER[f'ROB{i}'] = ROBEntry()
     for i in range(0, 31, 2): REGISTER_STATUS[f'F{i}'] = RegisterStatus()
 
 
@@ -44,13 +41,24 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
             RESERVATION_STATION[key].op = instruction.operation
             RESERVATION_STATION[key].D = instruction.register
             return key
+        
+
+def addROBInstruction(instruction: str, destination: str, reservation_station_name: str) -> str:
+    for key in REORDER_BUFFER:
+        if REORDER_BUFFER[key].instruction is None:
+            REORDER_BUFFER[key].instruction = instruction
+            REORDER_BUFFER[key].destination = destination
+            REORDER_BUFFER[key].reservationStation = reservation_station_name
+            return key
 
 
 def issueInstructions(instruction: InstructionUnit) -> None:
- 
+
     if instruction.operation in ['ADD', 'SUB']:
         reservation_station_name = updateReservationStation('Add', instruction)
-        # Verifica se há dependências e atualiza os campos das unidades
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+        # Checks for dependencies and updates unit fields
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
                 RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
@@ -66,12 +74,13 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         else:
             RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
         
-        # Atualiza o status do registrador de destino
+        # Updates the status of the target registrar
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation in ['MUL', 'DIV']:
         reservation_station_name = updateReservationStation('Mult', instruction)
-        # Verifica se há dependências e atualiza os campos das unidades
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
                 RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
@@ -87,27 +96,26 @@ def issueInstructions(instruction: InstructionUnit) -> None:
         else:
             RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
         
-        # Atualiza o status do registrador de destino
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'LW':
-        # Cria uma nova entrada na estação de reserva Load
         reservation_station_name = updateReservationStation('Load', instruction)
-        # Verifica se há dependências e atualiza os campos das unidades
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
         else:
             RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
-        # Define o endereço do dado na memória
         RESERVATION_STATION[reservation_station_name].A = instruction.arg2
         
-        # Atualiza o status do registrador de destino
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     elif instruction.operation == 'SW':
-         # Cria uma nova entrada na estação de reserva Store
         reservation_station_name = updateReservationStation('Store', instruction)
-        # Verifica se há dependências e atualiza os campos das unidades
+        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+
         if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
             RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
         else:
@@ -116,47 +124,45 @@ def issueInstructions(instruction: InstructionUnit) -> None:
             RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
         else:
             RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
-        # Define o endereço do dado na memória
         RESERVATION_STATION[reservation_station_name].A = instruction.register
-        
-        # Atualiza o status do registrador de destino
+
         if REGISTER_STATUS[instruction.register].Qi is None:
             REGISTER_STATUS[instruction.register].Qi = reservation_station_name
     else:
         print(str(instruction.operation) + " não é válido.")
 
 
-def executeOperations(instruction_reservation: ReservationStation) -> str:
-    if instruction_reservation.op == 'LW':
-        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
-    elif instruction_reservation.op == 'SW':
-        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.A)})'
-    elif instruction_reservation.op == 'SUB':
-        return f'VAL({str(instruction_reservation.Vj) + " - " + str(instruction_reservation.Vk)})'
-    elif instruction_reservation.op == 'ADD':
-        return f'VAL({str(instruction_reservation.Vj) + " + " + str(instruction_reservation.Vk)})'
-    elif instruction_reservation.op == 'MUL':
-        return f'VAL({str(instruction_reservation.Vj) + " * " + str(instruction_reservation.Vk)})'
-    elif instruction_reservation.op == 'DIV':
-        return f'VAL({str(instruction_reservation.Vj) + " / " + str(instruction_reservation.Vk)})'
+def dequeueROB() -> None:
+    for key in REORDER_BUFFER:
+        if REORDER_BUFFER[key].ready:
+            if REORDER_BUFFER[key].instruction != 'SW':
+                REGISTER_STATUS[REORDER_BUFFER[key].destination].Qi = REORDER_BUFFER[key].value
+            del REORDER_BUFFER[key]
+            REORDER_BUFFER[key] = ROBEntry()
+        else: break
 
 
 def updateUnits() -> None:
-    for chave in RESERVATION_STATION:
-        if RESERVATION_STATION[chave].busy == True:
-            if RESERVATION_STATION[chave].timeToFinish == 0:
-                REGISTER_STATUS[RESERVATION_STATION[chave].D].Qi = executeOperations(RESERVATION_STATION[chave])
-                for sub_chave in RESERVATION_STATION:
-                    if RESERVATION_STATION[sub_chave].Qj == chave:
-                        RESERVATION_STATION[sub_chave].Qj = None
-                        RESERVATION_STATION[sub_chave].Vj = chave
-                    elif RESERVATION_STATION[sub_chave].Qk == chave:
-                        RESERVATION_STATION[sub_chave].Qk = None
-                        RESERVATION_STATION[sub_chave].Vk = chave
-                RESERVATION_STATION[chave] = ReservationStation()
+    for key in RESERVATION_STATION:
+        if RESERVATION_STATION[key].busy == True:
+            if RESERVATION_STATION[key].timeToFinish == 0:
+                rob_key = RESERVATION_STATION[key].ROBId
+                REORDER_BUFFER[rob_key].ready = True
+                REORDER_BUFFER[rob_key].leftReservationStation = True
+                REORDER_BUFFER[rob_key].value = REORDER_BUFFER[rob_key].executeOperations(RESERVATION_STATION[REORDER_BUFFER[rob_key].reservationStation])
+                dequeueROB()
+                for sub_key in RESERVATION_STATION:
+                    if RESERVATION_STATION[sub_key].Qj == key:
+                        RESERVATION_STATION[sub_key].Qj = None
+                        RESERVATION_STATION[sub_key].Vj = key
+                    elif RESERVATION_STATION[sub_key].Qk == key:
+                        RESERVATION_STATION[sub_key].Qk = None
+                        RESERVATION_STATION[sub_key].Vk = key
+                RESERVATION_STATION[key] = ReservationStation()
             else:
-                if RESERVATION_STATION[chave].Qj == None and RESERVATION_STATION[chave].Qk == None:
-                    RESERVATION_STATION[chave].timeToFinish -= 1
+                if RESERVATION_STATION[key].Qj == None and RESERVATION_STATION[key].Qk == None:
+                    RESERVATION_STATION[key].timeToFinish -= 1
+
 
 
 def isReservationEmpty() -> bool:
@@ -172,11 +178,6 @@ def printInformation():
         print(f'---------------------------------------------- INSTRUCTIONS QUEUE STATION ----------------------------------------------')
         for i in INSTRUCTION_QUEUE:
             print(str(i))
-    
-    if len(COMPLETE_INSTRUCTIONS) != 0:
-        print(f'---------------------------------------------- COMPLETE INSTRUCTIONS STATION ----------------------------------------------')
-        for i in COMPLETE_INSTRUCTIONS:
-            print(str(i))
 
     print(f'---------------------------------------------- RESERVATION STATION ----------------------------------------------')
     for i in RESERVATION_STATION:
@@ -186,7 +187,9 @@ def printInformation():
     for i in REGISTER_STATUS:
         print(str(i) + " " + str(REGISTER_STATUS[i]))
 
-    print(ROB_UNIT)
+    print(f'---------------------------------------------- REORDER BUFFER ----------------------------------------------')
+    for i in REORDER_BUFFER:
+        print(str(i) + " " + str(REORDER_BUFFER[i]))
     print("\n")
 
 
@@ -208,14 +211,13 @@ def runProgram() -> None:
     
 def main() -> None:
     readInstructions("../instructions/instruction1.txt")
-    loads_fu = 3
-    store_fu = 3
-    add_fu = 3
+    loads_fu = 2
+    store_fu = 2
+    add_fu = 2
     mult_fu = 3
     createUnits(loads_fu, store_fu, add_fu, mult_fu)
     runProgram()
 
 main()
 # TODO: travar instrução e esperar acabar uma e pular outras caso o reservation station esteja ocupado.
-# TODO: tratar dependências falsas dependendo da quantidade de ciclos de clock os valores armazenados no registrador não ficam certos
 # TODO: ver se seria necessário criar a memória RANDOM para pegar os valores e fazer os calculos colocando valores inteiros (Simulador acho que não precisa, mas vale a pena perguntar)
