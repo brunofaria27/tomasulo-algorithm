@@ -6,16 +6,8 @@ class InstructionUnit:
         self.register = register
         self.arg1 = arg1
         self.arg2 = arg2
-        self.isIssued = False
-        self.isStarted = False
-        self.isWritten = False
-        self.isFinished = False
         self.clocks = CLOCK_TIME_INSTRUCTION[operation]
         self.clocksLeft = CLOCK_TIME_INSTRUCTION[operation]
-        self.isIssuedClock = -1
-        self.isStartedClock = -1
-        self.isWrittenClock = -1
-        self.isFinishedClock = -1
 
     def __str__(self) -> str:
         return "[Operation: " + str(self.operation) + ", Register: " + str(self.register) + ", Argument 1: " + str(self.arg1) + ", Argument 2: " + str(
