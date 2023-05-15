@@ -33,7 +33,7 @@ def createUnits(loads_fu: int, store_fu: int, add_fu: int, mult_fu: int) -> None
     for i in range(0, 31, 2): REGISTER_STATUS[f'F{i}'] = RegisterStatus()
 
 
-def updateReservationStation(name_type: str, instruction: InstructionUnit) -> str:
+def updateReservationStation(name_type: str, instruction: InstructionUnit) -> str or None:
     for key in RESERVATION_STATION:
         if RESERVATION_STATION[key].busy == False and key.startswith(name_type):
             RESERVATION_STATION[key].busy = True
@@ -41,93 +41,107 @@ def updateReservationStation(name_type: str, instruction: InstructionUnit) -> st
             RESERVATION_STATION[key].op = instruction.operation
             RESERVATION_STATION[key].D = instruction.register
             return key
+    return None
         
 
-def addROBInstruction(instruction: str, destination: str, reservation_station_name: str) -> str:
+def addROBInstruction(instruction: str, destination: str, reservation_station_name: str) -> str or None:
     for key in REORDER_BUFFER:
         if REORDER_BUFFER[key].instruction is None:
             REORDER_BUFFER[key].instruction = instruction
             REORDER_BUFFER[key].destination = destination
             REORDER_BUFFER[key].reservationStation = reservation_station_name
             return key
+    return None
 
 
 def issueInstructions(instruction: InstructionUnit) -> None:
 
     if instruction.operation in ['ADD', 'SUB']:
         reservation_station_name = updateReservationStation('Add', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
-        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
-        # Checks for dependencies and updates unit fields
-        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
-                RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+        if reservation_station_name != None:
+            rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+            RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+            # Checks for dependencies and updates unit fields
+            if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+                if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
+                    RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+                else:
+                    RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
             else:
-                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
-        else:
-                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
-        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
-            if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
-                RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+                    RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+            if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+                if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
+                    RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+                else:
+                    RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
             else:
-                RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
-        else:
-            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
-        
-        # Updates the status of the target registrar
-        if REGISTER_STATUS[instruction.register].Qi is None:
-            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+                RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+            
+            # Updates the status of the target registrar
+            if REGISTER_STATUS[instruction.register].Qi is None:
+                REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+        elif reservation_station_name == None:
+            INSTRUCTION_QUEUE.insert(0, instruction)
     elif instruction.operation in ['MUL', 'DIV']:
         reservation_station_name = updateReservationStation('Mult', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
-        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
-        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
-                RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+        if reservation_station_name != None:
+            rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+            RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+            if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+                if str(REGISTER_STATUS[instruction.arg1].Qi).startswith('VAL'):
+                    RESERVATION_STATION[reservation_station_name].Vj = REGISTER_STATUS[instruction.arg1].Qi
+                else:
+                    RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
             else:
-                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
-        else:
-                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
-        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
-            if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
-                RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+                    RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+            if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+                if str(REGISTER_STATUS[instruction.arg2].Qi).startswith('VAL'):
+                    RESERVATION_STATION[reservation_station_name].Vk = REGISTER_STATUS[instruction.arg2].Qi
+                else:
+                    RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
             else:
-                RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
-        else:
-            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
-        
-        if REGISTER_STATUS[instruction.register].Qi is None:
-            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+                RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+            
+            if REGISTER_STATUS[instruction.register].Qi is None:
+                REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+        elif reservation_station_name == None:
+            INSTRUCTION_QUEUE.insert(0, instruction)
     elif instruction.operation == 'LW':
         reservation_station_name = updateReservationStation('Load', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
-        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+        if reservation_station_name != None:
+            rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+            RESERVATION_STATION[reservation_station_name].ROBId = rob_name
 
-        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
-        else:
-            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
-        RESERVATION_STATION[reservation_station_name].A = instruction.arg2
-        
-        if REGISTER_STATUS[instruction.register].Qi is None:
-            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+            if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+            RESERVATION_STATION[reservation_station_name].A = instruction.arg2
+            
+            if REGISTER_STATUS[instruction.register].Qi is None:
+                REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+        elif reservation_station_name == None:
+            INSTRUCTION_QUEUE.insert(0, instruction)
     elif instruction.operation == 'SW':
         reservation_station_name = updateReservationStation('Store', instruction)
-        rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
-        RESERVATION_STATION[reservation_station_name].ROBId = rob_name
+        if reservation_station_name != None:
+            rob_name = addROBInstruction(instruction.operation, instruction.register, reservation_station_name)
+            RESERVATION_STATION[reservation_station_name].ROBId = rob_name
 
-        if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
-        else:
-            RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
-        if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
-            RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
-        else:
-            RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
-        RESERVATION_STATION[reservation_station_name].A = instruction.register
+            if instruction.arg1.startswith('F') and REGISTER_STATUS[instruction.arg1].Qi is not None:
+                RESERVATION_STATION[reservation_station_name].Qj = REGISTER_STATUS[instruction.arg1].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Vj = instruction.arg1
+            if instruction.arg2.startswith('F') and REGISTER_STATUS[instruction.arg2].Qi is not None:
+                RESERVATION_STATION[reservation_station_name].Qk = REGISTER_STATUS[instruction.arg2].Qi
+            else:
+                RESERVATION_STATION[reservation_station_name].Vk = instruction.arg2
+            RESERVATION_STATION[reservation_station_name].A = instruction.register
 
-        if REGISTER_STATUS[instruction.register].Qi is None:
-            REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+            if REGISTER_STATUS[instruction.register].Qi is None:
+                REGISTER_STATUS[instruction.register].Qi = reservation_station_name
+        elif reservation_station_name == None:
+            INSTRUCTION_QUEUE.insert(0, instruction)
     else:
         print(str(instruction.operation) + " não é válido.")
 
