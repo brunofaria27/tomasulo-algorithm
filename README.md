@@ -5,7 +5,7 @@
 ## 💻 Architecture
 
 <div align="center"> 
-    <img align="center" src="https://cdn.discordapp.com/attachments/1106243014571085845/1106243025308491886/image.png"/>
+    <img align="center" src="https://cdn.discordapp.com/attachments/1088056098130509824/1208809686422523904/R.png"/>
 </div>
 
 -----------------------------
